@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">سواعد عرب HR</string>
+    <string name="app_name">SAC</string>
     <string name="site_url">https://hr.sawaedarab.com/</string>
     <string name="no_internet">لا يوجد اتصال بالإنترنت</string>
     <string name="retry">إعادة المحاولة</string>
