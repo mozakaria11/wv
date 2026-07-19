@@ -111,6 +111,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // طلب أذونات الكاميرا والموقع فور فتح التطبيق لأول مرة
+    private val startupPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { /* لا حاجة لمعالجة إضافية، الأذونات هتتحقق تلقائيًا وقت الاستخدام الفعلي */ }
+
+    private fun requestInitialPermissions() {
+        val permissionsNeeded = mutableListOf<String>()
+        if (!hasCameraPermission()) permissionsNeeded.add(Manifest.permission.CAMERA)
+        if (!hasLocationPermission()) {
+            permissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION)
+            permissionsNeeded.add(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+        if (permissionsNeeded.isNotEmpty()) {
+            startupPermissionLauncher.launch(permissionsNeeded.toTypedArray())
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -124,6 +141,7 @@ class MainActivity : AppCompatActivity() {
         setupSwipeRefresh()
         setupOfflineRetry()
         setupBackNavigation()
+        requestInitialPermissions()
 
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState)
@@ -272,7 +290,6 @@ class MainActivity : AppCompatActivity() {
             // دعم طلبات الكاميرا/الميكروفون الحية (WebRTC) - لصفحة تسجيل الحضور بالوجه
             override fun onPermissionRequest(request: PermissionRequest) {
                 runOnUiThread {
-                    Toast.makeText(this@MainActivity, "🔧 تجربة: تم استقبال طلب الكاميرا", Toast.LENGTH_LONG).show()
                     val wantsVideo = request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
                     val wantsAudio = request.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
 
