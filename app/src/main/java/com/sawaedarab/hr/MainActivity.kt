@@ -43,6 +43,9 @@ class MainActivity : AppCompatActivity() {
     private var geoOrigin: String? = null
     private var geoCallback: GeolocationPermissions.Callback? = null
 
+    // طلبات الكاميرا/الميكروفون الحية (WebRTC) - تستخدمها صفحة تسجيل الحضور بالوجه
+    private var pendingWebRtcRequest: PermissionRequest? = null
+
     private val filePickerLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -80,6 +83,33 @@ class MainActivity : AppCompatActivity() {
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { /* النتيجة تُعالج تلقائيًا عبر onShowFileChooser عند إعادة المحاولة */ }
+
+    // نتيجة إذن الكاميرا/الميكروفون الخاص بطلبات WebRTC (تسجيل الوجه الحي)
+    private val webRtcPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val request = pendingWebRtcRequest
+        pendingWebRtcRequest = null
+        if (request == null) return@registerForActivityResult
+
+        val cameraGranted = permissions[Manifest.permission.CAMERA] == true || hasCameraPermission()
+        val micGranted = permissions[Manifest.permission.RECORD_AUDIO] == true || hasMicPermission()
+
+        val grantedResources = request.resources.filter { res ->
+            when (res) {
+                PermissionRequest.RESOURCE_VIDEO_CAPTURE -> cameraGranted
+                PermissionRequest.RESOURCE_AUDIO_CAPTURE -> micGranted
+                else -> false
+            }
+        }
+
+        if (grantedResources.isNotEmpty()) {
+            request.grant(grantedResources.toTypedArray())
+        } else {
+            request.deny()
+            Toast.makeText(this, "بحاجة لإذن الكاميرا لإتمام تسجيل الحضور", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -240,6 +270,40 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
 
+            // دعم طلبات الكاميرا/الميكروفون الحية (WebRTC) - لصفحة تسجيل الحضور بالوجه
+            override fun onPermissionRequest(request: PermissionRequest) {
+                runOnUiThread {
+                    val wantsVideo = request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+                    val wantsAudio = request.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+
+                    val needsVideoPermission = wantsVideo && !hasCameraPermission()
+                    val needsAudioPermission = wantsAudio && !hasMicPermission()
+
+                    if (!needsVideoPermission && !needsAudioPermission) {
+                        // الأذونات ممنوحة بالفعل على مستوى النظام
+                        val grantedResources = request.resources.filter { res ->
+                            when (res) {
+                                PermissionRequest.RESOURCE_VIDEO_CAPTURE -> hasCameraPermission()
+                                PermissionRequest.RESOURCE_AUDIO_CAPTURE -> hasMicPermission()
+                                else -> false
+                            }
+                        }
+                        if (grantedResources.isNotEmpty()) {
+                            request.grant(grantedResources.toTypedArray())
+                        } else {
+                            request.deny()
+                        }
+                    } else {
+                        // نطلب إذن النظام أولاً، ثم نمنح الصلاحية لصفحة الويب
+                        pendingWebRtcRequest = request
+                        val permissionsToRequest = mutableListOf<String>()
+                        if (needsVideoPermission) permissionsToRequest.add(Manifest.permission.CAMERA)
+                        if (needsAudioPermission) permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
+                        webRtcPermissionLauncher.launch(permissionsToRequest.toTypedArray())
+                    }
+                }
+            }
+
             // دعم إذن الموقع الجغرافي (لاعتماد العمل الإضافي عبر GPS)
             override fun onGeolocationPermissionsShowPrompt(
                 origin: String,
@@ -296,6 +360,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hasCameraPermission() = ContextCompatCheck(Manifest.permission.CAMERA)
+    private fun hasMicPermission() = ContextCompatCheck(Manifest.permission.RECORD_AUDIO)
     private fun hasLocationPermission() = ContextCompatCheck(Manifest.permission.ACCESS_FINE_LOCATION) ||
             ContextCompatCheck(Manifest.permission.ACCESS_COARSE_LOCATION)
 
