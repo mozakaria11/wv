@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.HRSawaedArab" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/purple_primary</item>
-        <item name="colorPrimaryDark">@color/purple_dark</item>
-        <item name="colorAccent">@color/purple_primary</item>
-        <item name="android:statusBarColor">@color/purple_dark</item>
+        <item name="colorPrimary">@color/app_navy</item>
+        <item name="colorPrimaryDark">@color/app_navy_dark</item>
+        <item name="colorAccent">@color/app_orange</item>
+        <item name="android:statusBarColor">@color/app_navy_dark</item>
         <item name="android:windowBackground">@color/bg_gray</item>
     </style>
 </resources>
