@@ -158,7 +158,6 @@ class MainActivity : AppCompatActivity() {
         settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
         settings.setGeolocationEnabled(true)
         settings.allowFileAccess = true
-        settings.userAgentString = settings.userAgentString + " HRSawaedArabApp/1.0"
 
         // السماح بحفظ الجلسة (تسجيل الدخول) بين مرات فتح التطبيق
         CookieManager.getInstance().setAcceptCookie(true)
@@ -273,6 +272,7 @@ class MainActivity : AppCompatActivity() {
             // دعم طلبات الكاميرا/الميكروفون الحية (WebRTC) - لصفحة تسجيل الحضور بالوجه
             override fun onPermissionRequest(request: PermissionRequest) {
                 runOnUiThread {
+                    Toast.makeText(this@MainActivity, "🔧 تجربة: تم استقبال طلب الكاميرا", Toast.LENGTH_LONG).show()
                     val wantsVideo = request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
                     val wantsAudio = request.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
 
