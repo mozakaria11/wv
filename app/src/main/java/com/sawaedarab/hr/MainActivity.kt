@@ -305,7 +305,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupSwipeRefresh() {
-        swipeRefresh.setColorSchemeResources(R.color.purple_primary)
+        swipeRefresh.setColorSchemeResources(R.color.app_orange)
         swipeRefresh.setOnRefreshListener {
             if (isOnline()) {
                 webView.reload()
